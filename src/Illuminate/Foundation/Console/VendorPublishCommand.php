@@ -33,6 +33,14 @@ class VendorPublishCommand extends Command
      */
     protected $tags = [];
 
+    /** 
+     * Boolean describing the status of files. Initially set to false, it changes
+     * to true if any file is successfully published.
+     *
+     * @var boolean
+     */
+    protected $published;
+
     /**
      * The console command signature.
      *
@@ -61,6 +69,8 @@ class VendorPublishCommand extends Command
         parent::__construct();
 
         $this->files = $files;
+
+        $this->published = false;
     }
 
     /**
@@ -159,6 +169,8 @@ class VendorPublishCommand extends Command
     {
         foreach ($this->pathsToPublish($tag) as $from => $to) {
             $this->publishItem($from, $to);
+
+            $this->published = true;
         }
     }
 
@@ -208,6 +220,8 @@ class VendorPublishCommand extends Command
             $this->files->copy($from, $to);
 
             $this->status($from, $to, 'File');
+        } else {
+            $this->didntCopyStatus($from, $to, 'File');
         }
     }
 
@@ -272,4 +286,22 @@ class VendorPublishCommand extends Command
 
         $this->line('<info>Copied '.$type.'</info> <comment>['.$from.']</comment> <info>To</info> <comment>['.$to.']</comment>');
     }
+
+    /**
+     * Write a 'didn't copy' status message to the console.
+     *
+     * @param  string  $from
+     * @param  string  $to
+     * @param  string  $type
+     * @return void
+     */
+    protected function didntCopyStatus($from, $to, $type)
+    {
+        $from = str_replace(base_path(), '', realpath($from));
+
+        $to = str_replace(base_path(), '', realpath($to));
+
+        $this->warn('Did not copy '.strtolower($type).' ['.$from.'] to ['.$to.'] as file already exists and "--force" was not specified.');
+    }
+
 }
